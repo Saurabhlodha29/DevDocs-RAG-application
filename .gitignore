@@ -1,0 +1,39 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+pyvenv.cfg
+
+# Environment Variables and Secrets
+.env
+.env.[a-zA-Z]*
+!.env.example
+secrets.json
+
+# Python Cache and Compiled Files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# LangGraph, LangChain, and Vector DB Local Data
+.langchain/
+.langgraph/
+chroma_db/
+.chroma/
+faiss_index/
+*.db
+*.sqlite
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

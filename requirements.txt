@@ -1,0 +1,30 @@
+# LLM / RAG framework
+langchain
+langchain-core
+langchain-community
+langchain-text-splitters
+langgraph
+
+# Embeddings / LLM provider
+langchain-google-genai
+langchain-groq
+langchain-huggingface
+langchain-nvidia-ai-endpoints
+
+# Vector Store
+faiss-cpu
+
+# Document loading
+pypdf
+
+# API / Backend
+fastapi
+uvicorn[standard]
+python-dotenv
+
+# Data validation / configuration
+pydantic
+
+# Testing
+pytest
+httpx
