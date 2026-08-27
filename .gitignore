@@ -37,3 +37,6 @@ faiss_index/
 # OS files
 .DS_Store
 Thumbs.db
+
+# test folder
+tests

@@ -12,10 +12,12 @@ langchain-huggingface
 langchain-nvidia-ai-endpoints
 
 # Vector Store
-faiss-cpu
+langchain-pinecone
+pinecone
 
 # Document loading
 pypdf
+langchain-pymupdf4llm
 
 # API / Backend
 fastapi
