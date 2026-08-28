@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from schemas import QueryRequest, QueryResponse
-from retrieval import retrieve
-from generation import generate
+from langchain_core.messages import HumanMessage
+from graph import workflow
 
 app = FastAPI(
     title="DevDocs RAG API",
@@ -11,16 +11,15 @@ app = FastAPI(
 
 
 @app.get("/health")
-def check_health():
+def check_health(): 
     return {'status':'healthy'}
 
 @app.post("/query",response_model = QueryResponse)
 def send_query(request : QueryRequest):
     
-    
-    context_list = retrieve(request.query)
-    context = '\n\n'.join(ctx for ctx in context_list)
-    
-    answer = generate(request.query,context)
+    answer = workflow.invoke({
+        'messages' : [HumanMessage(content = request.query)]},
+        config = {'configurable':{'thread_id':request.thread_id}}
+        )['messages'][-1].content
     
     return QueryResponse(answer = answer)
