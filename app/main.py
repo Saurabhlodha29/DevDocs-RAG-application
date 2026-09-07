@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from schemas import QueryRequest, QueryResponse
-from langchain_core.messages import HumanMessage
+from fastapi.responses import StreamingResponse
+from schemas import QueryRequest
+from langchain_core.messages import HumanMessage, AIMessage
 from graph import workflow
 
 app = FastAPI(
@@ -14,12 +15,26 @@ app = FastAPI(
 def check_health(): 
     return {'status':'healthy'}
 
-@app.post("/query",response_model = QueryResponse)
+@app.post("/query")
 def send_query(request : QueryRequest):
     
-    answer = workflow.invoke({
-        'messages' : [HumanMessage(content = request.query)]},
-        config = {'configurable':{'thread_id':request.thread_id}}
-        )['messages'][-1].content
-    
-    return QueryResponse(answer = answer)
+    def generate_response():
+        for message_chunk, metadata in workflow.stream(
+            {
+                'messages' : [HumanMessage(content = request.query)]
+            },
+            config = {
+                'configurable' : {
+                    'thread_id' : request.thread_id
+                }
+            },
+            stream_mode = 'messages'
+        ):
+            if metadata.get('langgraph_node') == 'generate' and isinstance(message_chunk, AIMessage):
+                if message_chunk.content:
+                    yield message_chunk.content
+            
+    return StreamingResponse(
+        generate_response(),
+        media_type = 'text/plain'
+    )

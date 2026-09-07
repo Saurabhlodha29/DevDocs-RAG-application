@@ -17,10 +17,21 @@ def retrieve_chunks(state : QueryState):
     return {'context':context}
 
 
-def generate_response(state : QueryState):
-    answer = generate(state['messages'][-1].content,state['messages'],state['context'])
-    
-    return {'messages':[AIMessage(content = answer)]}
+def generate_response(state: QueryState):
+    query = state['messages'][-1].content
+    history = state['messages'][:-1]
+
+    stream = generate(query=query, history=history, context=state['context'])
+
+    full_chunk = None
+    for chunk in stream:
+        full_chunk = chunk if full_chunk is None else full_chunk + chunk
+
+    # Preserve the id from the streamed chunks — this is what stops
+    # add_messages from treating the final result as a NEW message.
+    final_message = AIMessage(content=full_chunk.content, id=full_chunk.id)
+
+    return {'messages': [final_message]}
     
 
 graph = StateGraph(QueryState)

@@ -26,21 +26,24 @@ if user_input:
     with st.chat_message('user'):
         st.text(user_input)
 
-    # The question goes to backend    
+    # The question goes to backend
     response = requests.post(
         "http://localhost:8000/query",
-        json = {'query':user_input,'thread_id':thread_id}
+        json = {'query':user_input,'thread_id':thread_id},
+        stream = True
     )
     
     # Showing the LLM response
     if response.status_code == 200:
-        ai_message = response.json()['answer']
+        ai_message = st.write_stream(
+            response.iter_content(
+                chunk_size = None,
+                decode_unicode = True
+            )
+        )
         
         # Add AIMessage to message history
         st.session_state['message_history'].append({'role':'assistant','content':ai_message})
         
-        # Show the LLM response
-        with st.chat_message('assistant'):
-            st.text(ai_message)
     else:
         st.error('Something went wrong')

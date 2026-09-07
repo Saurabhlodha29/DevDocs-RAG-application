@@ -1,46 +1,49 @@
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import BaseMessage
 
 model = ChatNVIDIA(
     model = "openai/gpt-oss-20b"
 )
 
-prompt = PromptTemplate(
-    template="""You are a strict, factual GenAI Expert and AI Engineer. Your task is to answer the User Query by strictly following the Decision Rules below.
+prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """You are a strict, factual GenAI Expert and AI Engineer.
+        
+        Answer the user's question using these rules:
+        
+        1. Use the retrieved context first.
+        2. If the retrieved context does not contain the answer, use the conversation history.
+        3. If neither contains the complete answer, reply exactly:
+        "I don't know."
+        
+        Do not use outside knowledge.
+        Do not assume or fill gaps.
+        Keep your response concise, factual, and direct."""
+    ),
 
-### CONTEXT & DATA
-[CONVERSATION HISTORY]
-{history}
+    MessagesPlaceholder(variable_name="history"),
 
-[RETRIEVED CONTEXT]
-{context}
-
-[USER QUERY]
-{user_query}
-
-### DECISION RULES (CRITICAL)
-1. **Primary Source**: Evaluate the [RETRIEVED CONTEXT] first. If it contains the exact information needed to answer the query, use it.
-2. **Secondary Source**: If the [RETRIEVED CONTEXT] is missing info or irrelevant, evaluate the [CONVERSATION HISTORY]. Use it only if it contains the exact factual answer.
-3. **Fallback Rule**: If neither [RETRIEVED CONTEXT] nor [CONVERSATION HISTORY] contains the complete, explicit answer, you MUST reply with exactly: "I don't know."
-
-### STRICT CONSTRAINTS
-* Do NOT use any outside knowledge. 
-* Do NOT assume, extrapolate, or fill in gaps.
-* If the answer cannot be completely proven by the data above, say "I don't know."
-* Keep your response concise, factual, and direct.
-
-Answer:""",
-    input_variables=['user_query', 'history', 'context']
-)
+    (
+        "human",
+        """[RETRIEVED CONTEXT]
+        {context}
+        
+        [USER QUERY]
+        {user_query}"""
+    )
+])
 
 
-parser = StrOutputParser()
+chain = prompt | model
     
-def generate(query:str, history:list[BaseMessage], context:str) -> str:
+def generate(query: str, history: list[BaseMessage], context: str):
+    """Streams the chain and returns the LangChain-native stream iterator.
+    Each chunk is an AIMessageChunk, not a raw string."""
     
-    chain = prompt | model | parser
-    result = chain.invoke({'user_query':query,'history':history,'context':context})
-    
-    return result
+    return chain.stream({
+        'user_query': query,
+        'history': history,
+        'context': context
+    })
