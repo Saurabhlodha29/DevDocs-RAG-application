@@ -2,9 +2,10 @@ from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, Annotated
 from langchain_core.messages import BaseMessage, AIMessage
 from langgraph.graph.message import add_messages
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.postgres import PostgresSaver
 from retrieval import retrieve
 from generation import generate
+import os
 
 class QueryState(TypedDict):
     context : str
@@ -43,6 +44,13 @@ graph.add_edge(START,"retrieve")
 graph.add_edge("retrieve","generate")
 graph.add_edge("generate",END)
 
-checkpointer = InMemorySaver()
+# Configuring Postgre Checkpointer to enable Supabase Chatstorage
 
-workflow = graph.compile(checkpointer = checkpointer)
+DB_URI = os.getenv('DATABASE_URL')
+
+checkpointer_context = PostgresSaver.from_conn_string(DB_URI)
+checkpointer = checkpointer_context.__enter__()
+
+checkpointer.setup()
+
+chatbot = graph.compile(checkpointer = checkpointer)
